@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRUD Todo</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .done {
+        opacity: 0.3;
+        text-decoration: line-through;
+      }
+
+      .edit {
+        /* input */
+        display: none;
+        /* 最初は非表示 */
+      }
+
+      /* 親要素にクラスが付与された場合input要素を表示 */
+      .editing .edit {
+        /* li > input */
+        display: inline;
+        /* 改行無しで右に表示 */
+      }
+
+      
+    </style>
+  </head>
+  <body class="h-full">
+    <div id="app">
+      <div
+        class="max-w-2xl mx-auto p-6 bg-white shadow overflow-hidden sm:rounded-lg"
+      >
+        <div class="px-4 sm:px-0">
+          <h3 class="text-base font-semibold leading-7 text-gray-900">
+            {{ state.title }}
+          </h3>
+          <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+            Build a Todo List App with VueJS
+          </p>
+        </div>
+        <div class="mt-6 border-t border-gray-100">
+          <dl class="divide-y divide-gray-100">
+            <div
+              class="bg-gray-50 px-4 py-6 sm:grid sm:grid-cols-auto sm:gap-4 sm:px-0"
+            >
+              <div
+                v-if="state.error"
+                class="font-bold py-5 px-5 mb-3 inline-flex text-center tracking-widest rounded bg-red-100 text-red-800"
+              >
+                {{ state.errorMessage }}
+              </div>
+              <div
+                class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600"
+              >
+                <span
+                  class="flex select-none items-center px-10 text-gray-500 sm:text-sm"
+                  >Todo</span
+                >
+                <input
+                  type="text"
+                  name="username"
+                  id="username"
+                  autocomplete="username"
+                  class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+                  placeholder="janesmith"
+                  v-model="state.newMsg"
+                  @keyup.enter="addTodo"
+                  autofocus
+                />
+              </div>
+            </div>
+            <div
+              v-for="(todo, index) in state.todos"
+              :class="{done: todo.completed, editing: todo === state.editObj,  ['bg-gray-50']: (index % 2) === 0}"
+              :key="todo.id"
+              class="px-4 py-6 sm:grid sm:grid-cols-9 sm:gap-4 sm:px-0"
+            >
+              <dt
+                class="text-sm pl-10 mt-3 font-medium leading-6 text-gray-900 sm:col-span-3"
+              >
+                {{todo.id}}
+                <input
+                  type="checkbox"
+                  v-model="todo.completed"
+                  :class="{done: todo.completed}"
+                  :key="todo.id"
+                  class="ml-4 text-sm font-semibold leading-6 text-gray-900"
+                />
+              </dt>
+              <dd
+                class="mt-1 text-2xl font-bold text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0 sm:col-span-4"
+              >
+                <label @dblclick="editTodo(todo)" class="text-lg">
+                  {{ todo.msg }}
+                </label>
+                <input
+                  class="edit mt-1 ml-4 p-2 border border-gray-600 form-input w-auto transition duration-150 ease-in-out sm:text-sm sm:leading-5"
+                  v-model="state.editMsg"
+                  @keyup.enter="updateTodo(todo)"
+                />
+              </dd>
+              <dd class="sm:mt-0 sm:col-span-2">
+                <button
+                  @click="deleteTodo(todo)"
+                  class="inline-flex rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 items-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-5 h-6 mr-1"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                    />
+                  </svg>
+                  Delete
+                </button>
+              </dd>
+            </div>
+          <div v-if="existsTodo()"
+              class="px-4 py-6 sm:grid sm:grid-cols-12 sm:gap-4 sm:px-0">
+            <dt class="my-4 sm:col-span-4 text-sm font-medium leading-6 text-gray-900 text-center">登録件数</dt>
+            <dd
+              class="inline-flex sm:col-span-8 flex px-4 py-4 rounded-md shadow-sm ring-1 ring-inset ring-gray-300"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-6 h-6"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"
+                />
+              </svg>
+              <strong>{{ todoCount() }}</strong>個
+            </dd>
+        </div>
+          </dl>
+      </div>
+      </div>
+      <h1>{{state.title}}</h1>
+      <input v-model="state.newMsg" @keyup.enter="addTodo" autofocus />&nbsp;
+      <span v-if="state.error"> {{ state.errorMessage }} </span>
+      <ul>
+        <li
+          v-for="todo in state.todos"
+          :class="{done: todo.completed, editing: todo === state.editObj}"
+          :key="todo.id"
+        >
+          <input
+            type="checkbox"
+            v-model="todo.completed"
+            :class="{done: todo.completed}"
+            :key="todo.id"
+          />&nbsp;
+          <label @dblclick="editTodo(todo)"> {{ todo.msg }} </label>&nbsp;
+          <input
+            class="edit"
+            v-model="state.editMsg"
+            @keyup.enter="updateTodo(todo)"
+          />&nbsp; <button @click="deleteTodo(todo)">X</button>
+        </li>
+      </ul>
+      <div v-if="existsTodo()">
+        登録件数&nbsp;<strong>{{ todoCount() }}</strong>個
+      </div>
+    </div>
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+      Vue.createApp({
+        setup() {
+          const state = Vue.reactive({
+            title: 'CRUD Todo',
+            newMsg: '',
+            todos: [],
+            editObj: null,
+            editMsg: '',
+            error: false,
+            errorMessage: '※ 値を入力してください',
+          })
+          // 初回に読み込みを実行
+          Vue.onMounted(() => {
+            getTodos()
+          })
+          const addTodo = () => {
+            if (!state.newMsg) {
+              state.error = true
+              return
+            }
+            state.todos.push({
+              id: new Date().getTime().toString().slice(-4),
+              completed: false,
+              msg: state.newMsg,
+            })
+            state.newMsg = ''
+            addTodos()
+            state.error = false
+          }
+          const editTodo = (todoObj) => {
+            state.editObj = todoObj
+            state.editMsg = todoObj.msg
+          }
+          const updateTodo = (todoObj) => {
+            // 更新タイトルを元のオブジェクトのタイトルに再代入
+            todoObj.msg = state.editMsg
+            state.editObj = null // 編集用リストの初期化
+            state.editMsg = '' // 編集用タイトルの初期化
+            addTodos()
+          }
+          const deleteTodo = (todoObj) => {
+            const delIndex = state.todos.indexOf(todoObj)
+            state.todos.splice(delIndex, 1)
+            addTodos()
+          }
+          const addTodos = () => {
+            localStorage.setItem('todos', JSON.stringify(state.todos))
+          }
+          const getTodos = () => {
+            const todos = localStorage.getItem('todos')
+            if (todos) {
+              state.todos = JSON.parse(todos)
+            }
+          }
+          const existsTodo = () => {
+            // オブジェクトが1以上ならtrueを返す
+            return state.todos.length > 0
+          }
+          const todoCount = () => {
+            // オブジェクトの個数を文字列で返す
+            return state.todos.length.toString()
+          }
+          return {
+            state,
+            addTodo,
+            editTodo,
+            updateTodo,
+            deleteTodo,
+            existsTodo,
+            todoCount,
+          }
+        },
+      }).mount('#app')
+    </script>
+  </body>
+</html>

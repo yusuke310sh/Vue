@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>VueCounter</title>
+    </head>
+    <body>
+        <div id="app">
+            <h1>{{ message }}</h1> <!-- Hello Vue -->
+            <!-- stateオブジェクトのdoubleプロパティを参照 -->
+            <h2>累乗：{{ state.double }} {{state.multiple}}</h2>
+            <!-- クリックするとincrement関数が実行される -->
+            <button @click="increment">加算 {{ state.count }}</button>
+            <button @click="decrement">減算 {{ state.count }}</button>
+            <button @click="reset">リセット {{ state.count }}</button>
+        </div>
+        <script src="https://unpkg.com/vue@next"></script>
+        <script>
+            Vue.createApp({
+                setup() {
+                    const message = Vue.ref('Counter App')
+                    // console.logは削除
+
+                    const state = Vue.reactive({
+                        count: 0,
+                        double: Vue.computed(() => Math.pow(state.count, 2)),
+                        multiple: Vue.computed(() => {
+                            if (state.double != 0 && state.count % 3 == 0) return '3の倍数です'
+                        })
+                    })
+
+                    // countプロパティに1を加算する処理の定義
+                    const increment = () => state.count++
+                    const decrement = () => state.count--
+                    const reset = () => state.count = 0
+
+                    // stateオブジェクトとincrement関数を返す
+                    return { message, state, increment, decrement, reset }
+                }
+            }).mount('#app')
+        </script>
+    </body>
+</html
